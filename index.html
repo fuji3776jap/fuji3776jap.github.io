@@ -134,6 +134,7 @@
     border-radius: 3px;
     cursor: pointer;
     font-size: 14px;
+    margin-bottom: 10px;
   }
   .copy-button:hover, .read-button:hover {
     background-color: #0b7dda;
@@ -150,9 +151,15 @@
     padding: 10px;
     background-color: #e8e8e8;
     border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
   }
   #globalActions button {
+    flex: 1;
     margin-right: 10px;
+  }
+  #globalActions button:last-child {
+    margin-right: 0;
   }
   #scrollButtons {
     position: fixed;
@@ -235,13 +242,13 @@
   <div id="globalActions">
     <button id="copyAllButton" class="button">全記事をコピー</button>
     <button id="readAllButton" class="button">全記事を読み上げ</button>
-    <div class="read-options">
-      <select id="globalVoiceSelect">
-        <!-- 音声オプションはJavaScriptで動的に追加されます -->
-      </select>
-      <input type="range" id="globalSpeedRange" min="0.5" max="2" step="0.1" value="1.2">
-      <span id="globalSpeedValue">1.2x</span>
-    </div>
+  </div>
+  <div class="read-options">
+    <select id="globalVoiceSelect">
+      <!-- 音声オプションはJavaScriptで動的に追加されます -->
+    </select>
+    <input type="range" id="globalSpeedRange" min="0.5" max="2" step="0.1" value="1.2">
+    <span id="globalSpeedValue">1.2x</span>
   </div>
   <div id="result"></div>
 </div>
@@ -374,12 +381,12 @@ async function extractArticles(url, articleUrlPattern) {
         articleElement.classList.add('article');
         articleElement.innerHTML = `
           <div class="article-title">${title}</div>
+          <button class="copy-button">この記事をコピー</button>
+          <button class="read-button">この記事を読み上げ</button>
           ${date ? `<div class="article-date">${date}</div>` : ''}
           <div class="article-content">
             ${paragraphs.map(p => `<p>${p}</p>`).join('')}
           </div>
-          <button class="copy-button">この記事をコピー</button>
-          <button class="read-button">この記事を読み上げ</button>
           <div class="read-options">
             <select class="voice-select">
               <!-- 音声オプションはJavaScriptで動的に追加されます -->
@@ -444,12 +451,12 @@ async function extractArticles(url, articleUrlPattern) {
           allArticles.push({ title, date, paragraphs, url });
           retryElement.innerHTML = `
             <div class="article-title">${title}</div>
+            <button class="copy-button">この記事をコピー</button>
+            <button class="read-button">この記事を読み上げ</button>
             ${date ? `<div class="article-date">${date}</div>` : ''}
             <div class="article-content">
               ${paragraphs.map(p => `<p>${p}</p>`).join('')}
             </div>
-            <button class="copy-button">この記事をコピー</button>
-            <button class="read-button">この記事を読み上げ</button>
             <div class="read-options">
               <select class="voice-select">
                 <!-- 音声オプションはJavaScriptで動的に追加されます -->
@@ -604,10 +611,10 @@ function populateVoiceList() {
     `<option value="${voice.name}">${voice.name}</option>`
   ).join('');
 
-  // Siriの音声をデフォルトに設定
-  const siriVoice = japaneseVoices.find(voice => voice.name.includes('Siri'));
-  if (siriVoice) {
-    voiceOptionsHTML = `<option value="${siriVoice.name}" selected>${siriVoice.name}</option>` + voiceOptionsHTML;
+  // Microsoft Nanami Online (Natural) - Japanese をデフォルトに設定
+  const defaultVoice = japaneseVoices.find(voice => voice.name === 'Microsoft Nanami Online (Natural) - Japanese');
+  if (defaultVoice) {
+    voiceOptionsHTML = `<option value="${defaultVoice.name}" selected>${defaultVoice.name}</option>` + voiceOptionsHTML;
   }
 
   document.getElementById('globalVoiceSelect').innerHTML = voiceOptionsHTML;
