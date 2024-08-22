@@ -1,0 +1,647 @@
+<html><head><base href="https://newsdig.tbs.co.jp/list/latest%E3%81%AF%E8%89%AF%E3%81%8F%E6%A4%9C%E7%B4%A2%E3%81%99%E3%82%8B%E3%81%AE%E3%81%A7%E3%83%9C%E3%82%BF%E3%83%B3%E3%82%92%E9%85%8D%E7%BD%AE%E3%81%97%E3%81%A6%E3%81%8F%E3%81%A0%E3%81%95%E3%81%84">
+<title>ニュース抽出ツール</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 10px;
+    background-color: #f0f0f0;
+    font-size: 16px;
+  }
+  #container {
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  h1 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+  .urlInput {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  .button {
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    width: 100%;
+    margin-bottom: 10px;
+    transition: background-color 0.3s;
+  }
+  #extractButton, #extractNewsButton, #extractTBSButton {
+    background-color: #4CAF50;
+  }
+  #extractButton:hover, #extractNewsButton:hover, #extractTBSButton:hover {
+    background-color: #45a049;
+  }
+  #sbsLatestButton {
+    background-color: #3498db;
+  }
+  #sbsLatestButton:hover {
+    background-color: #2980b9;
+  }
+  #latestButton {
+    background-color: #e74c3c;
+  }
+  #latestButton:hover {
+    background-color: #c0392b;
+  }
+  #nhkLatestButton {
+    background-color: #f39c12;
+  }
+  #nhkLatestButton:hover {
+    background-color: #d35400;
+  }
+  #result {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+    max-height: 70vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  .loading {
+    display: none;
+    text-align: center;
+    margin-top: 20px;
+  }
+  .error {
+    color: red;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+  .article {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+  }
+  .article-title {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .article-date {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+  .article-content p {
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  #progressContainer {
+    margin-top: 15px;
+    display: none;
+  }
+  #progressBar {
+    width: 100%;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  #progressFill {
+    height: 100%;
+    background-color: #4CAF50;
+    width: 0%;
+    transition: width 0.3s ease-in-out;
+  }
+  #progressText {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 14px;
+  }
+  .copy-button, .read-button {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    margin-right: 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .copy-button:hover, .read-button:hover {
+    background-color: #0b7dda;
+  }
+  .read-options {
+    margin-top: 10px;
+  }
+  .read-options select, .read-options input {
+    margin-right: 10px;
+    padding: 5px;
+  }
+  #globalActions {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #e8e8e8;
+    border-radius: 4px;
+  }
+  #globalActions button {
+    margin-right: 10px;
+  }
+  #scrollButtons {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  #scrollTopButton, #scrollBottomButton {
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #scrollTopButton:hover, #scrollBottomButton:hover {
+    opacity: 1;
+  }
+  @media (max-width: 600px) {
+    body {
+      padding: 5px;
+    }
+    #container {
+      padding: 10px;
+    }
+    h1 {
+      font-size: 20px;
+    }
+    .button {
+      font-size: 16px;
+      padding: 10px 15px;
+    }
+    .article-title {
+      font-size: 16px;
+    }
+    .article-content p {
+      font-size: 14px;
+    }
+    .copy-button, .read-button {
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+    .read-options select, .read-options input {
+      font-size: 12px;
+      padding: 4px;
+    }
+    #scrollTopButton, #scrollBottomButton {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <h1>ニュース抽出ツール</h1>
+  <input type="text" id="urlInput" class="urlInput" placeholder="ニュースサイトのURLを入力してください">
+  <button id="extractButton" class="button">入力URLからニュースを抽出</button>
+  <button id="sbsLatestButton" class="button">SBS最新ニュースを抽出</button>
+  <button id="latestButton" class="button">TBS最新ニュースを抽出</button>
+  <button id="nhkLatestButton" class="button">NHK最新ニュースを抽出</button>
+  <div id="loading" class="loading">読み込み中...</div>
+  <div id="progressContainer">
+    <div id="progressBar">
+      <div id="progressFill"></div>
+    </div>
+    <div id="progressText">0 / 0 記事を抽出中</div>
+  </div>
+  <div id="error" class="error"></div>
+  <div id="globalActions">
+    <button id="copyAllButton" class="button">全記事をコピー</button>
+    <button id="readAllButton" class="button">全記事を読み上げ</button>
+    <div class="read-options">
+      <select id="globalVoiceSelect">
+        <!-- 音声オプションはJavaScriptで動的に追加されます -->
+      </select>
+      <input type="range" id="globalSpeedRange" min="0.5" max="2" step="0.1" value="1.2">
+      <span id="globalSpeedValue">1.2x</span>
+    </div>
+  </div>
+  <div id="result"></div>
+</div>
+<div id="scrollButtons">
+  <button id="scrollTopButton" title="抽出内容の先頭へ">↑</button>
+  <button id="scrollBottomButton" title="抽出内容の末尾へ">↓</button>
+</div>
+
+<script>
+let synth = window.speechSynthesis;
+let currentUtterance = null;
+let allArticles = [];
+
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = 8000 } = options;
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal  
+  });
+  clearTimeout(id);
+
+  return response;
+}
+
+async function extractContent(url, maxRetries = 3, retryDelay = 2000) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, {
+        timeout: 8000
+      });
+      if (!response.ok) throw new Error('Network response was not ok.');
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      let title, date, paragraphs;
+
+      if (url.includes('tbs.co.jp')) {
+        title = doc.querySelector('.article-header-title')?.textContent.trim() || 'タイトルなし';
+        date = doc.querySelector('.article-header-time')?.textContent.trim() || '';
+        const contentDiv = doc.querySelector('.article-body.ad_pc_article_body');
+        paragraphs = contentDiv ? Array.from(contentDiv.getElementsByTagName('p')).map(p => p.textContent.trim()) : [];
+      } else if (url.includes('nhk.or.jp')) {
+        title = doc.querySelector('.content--title')?.textContent.trim() || 'タイトルなし';
+        date = doc.querySelector('.content--date')?.textContent.trim() || '';
+        const contentDiv = doc.querySelector('.content--detail-body');
+        paragraphs = contentDiv ? Array.from(contentDiv.getElementsByTagName('p')).map(p => p.textContent.trim()) : [];
+      } else {
+        title = doc.querySelector('.content--title')?.textContent.trim() || 'タイトルなし';
+        date = doc.querySelector('.content--date')?.textContent.trim() || '';
+        const contentDiv = doc.querySelector('.content--detail-body');
+        paragraphs = contentDiv ? Array.from(contentDiv.getElementsByTagName('p')).map(p => p.textContent.trim()) : [];
+      }
+      
+      if (paragraphs.length > 0) {
+        return { title, date, paragraphs, url };
+      } else {
+        throw new Error('No content found');
+      }
+    } catch (error) {
+      console.error(`Attempt ${attempt + 1} failed:`, error);
+      if (attempt === maxRetries - 1) {
+        throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+  }
+}
+
+async function extractArticles(url, articleUrlPattern) {
+  const resultElement = document.getElementById('result');
+  const loadingElement = document.getElementById('loading');
+  const errorElement = document.getElementById('error');
+  const progressContainer = document.getElementById('progressContainer');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+
+  resultElement.innerHTML = '';
+  errorElement.textContent = '';
+  loadingElement.style.display = 'block';
+  progressContainer.style.display = 'block';
+  progressFill.style.width = '0%';
+  allArticles = [];
+
+  try {
+    const response = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, {
+      timeout: 8000
+    });
+    if (!response.ok) throw new Error('Network response was not ok.');
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const links = doc.getElementsByTagName('a');
+    
+    let articleUrls;
+    if (articleUrlPattern === '/news/') {
+      articleUrls = Array.from(new Set(Array.from(links)
+        .map(link => link.getAttribute('href'))
+        .filter(href => href && href.includes('/news/') && !href.includes('/news/world/') && !href.includes('/news/word/'))
+        .map(href => new URL(href, url).href)));
+    } else if (articleUrlPattern === 'nhk') {
+      articleUrls = Array.from(new Set(Array.from(links)
+        .map(link => link.getAttribute('href'))
+        .filter(href => href && href.startsWith('/news/html/'))
+        .map(href => `https://www3.nhk.or.jp${href}`)));
+    } else if (articleUrlPattern === '/articles/-/') {
+      articleUrls = Array.from(new Set(Array.from(links)
+        .map(link => link.getAttribute('href'))
+        .filter(href => href && href.includes('/articles/-/'))
+        .map(href => new URL(href, url).href)));
+    } else {
+      articleUrls = Array.from(links)
+        .map(link => link.getAttribute('href'))
+        .filter(href => href && href.includes(articleUrlPattern))
+        .map(href => `https://newsdig.tbs.co.jp${href.startsWith('/') ? '' : '/'}${href}`);
+    }
+
+    const totalArticles = articleUrls.length;
+    let completedArticles = 0;
+
+    for (const articleUrl of articleUrls) {
+      try {
+        const { title, date, paragraphs, url } = await extractContent(articleUrl);
+        allArticles.push({ title, date, paragraphs, url });
+        const articleElement = document.createElement('div');
+        articleElement.classList.add('article');
+        articleElement.innerHTML = `
+          <div class="article-title">${title}</div>
+          ${date ? `<div class="article-date">${date}</div>` : ''}
+          <div class="article-content">
+            ${paragraphs.map(p => `<p>${p}</p>`).join('')}
+          </div>
+          <button class="copy-button">この記事をコピー</button>
+          <button class="read-button">この記事を読み上げ</button>
+          <div class="read-options">
+            <select class="voice-select">
+              <!-- 音声オプションはJavaScriptで動的に追加されます -->
+            </select>
+            <input type="range" class="speed-range" min="0.5" max="2" step="0.1" value="1.2">
+            <span class="speed-value">1.2x</span>
+          </div>
+        `;
+        resultElement.appendChild(articleElement);
+
+        const copyButton = articleElement.querySelector('.copy-button');
+        copyButton.addEventListener('click', () => {
+          const content = `${title}\n${date}\n\n${paragraphs.join('\n\n')}`;
+          navigator.clipboard.writeText(content).then(() => {
+            alert('記事をクリップボードにコピーしました');
+          }).catch(err => {
+            console.error('コピーに失敗しました:', err);
+          });
+        });
+
+        const readButton = articleElement.querySelector('.read-button');
+        const voiceSelect = articleElement.querySelector('.voice-select');
+        const speedRange = articleElement.querySelector('.speed-range');
+        const speedValue = articleElement.querySelector('.speed-value');
+
+        readButton.addEventListener('click', () => {
+          if (synth.speaking) {
+            synth.cancel();
+            readButton.textContent = 'この記事を読み上げ';
+          } else {
+            const content = `${title}。${date ? date + '。' : ''}${paragraphs.join('。')}`;
+            const utterance = new SpeechSynthesisUtterance(content);
+            utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === voiceSelect.value);
+            utterance.rate = parseFloat(speedRange.value);
+            utterance.onend = () => {
+              readButton.textContent = 'この記事を読み上げ';
+            };
+            synth.speak(utterance);
+            currentUtterance = utterance;
+            readButton.textContent = '停止';
+          }
+        });
+
+        speedRange.addEventListener('input', () => {
+          speedValue.textContent = `${speedRange.value}x`;
+          if (currentUtterance) {
+            currentUtterance.rate = parseFloat(speedRange.value);
+          }
+        });
+
+        completedArticles++;
+        updateProgress(completedArticles, totalArticles);
+      } catch (error) {
+        console.error(`Error extracting content from ${articleUrl}:`, error);
+        const retryElement = document.createElement('div');
+        retryElement.classList.add('article');
+        retryElement.innerHTML = `<p>${articleUrl} からのコンテンツ抽出に失敗しました。再試行中...</p>`;
+        resultElement.appendChild(retryElement);
+        
+        try {
+          const { title, date, paragraphs, url } = await extractContent(articleUrl, 5, 3000);
+          allArticles.push({ title, date, paragraphs, url });
+          retryElement.innerHTML = `
+            <div class="article-title">${title}</div>
+            ${date ? `<div class="article-date">${date}</div>` : ''}
+            <div class="article-content">
+              ${paragraphs.map(p => `<p>${p}</p>`).join('')}
+            </div>
+            <button class="copy-button">この記事をコピー</button>
+            <button class="read-button">この記事を読み上げ</button>
+            <div class="read-options">
+              <select class="voice-select">
+                <!-- 音声オプションはJavaScriptで動的に追加されます -->
+              </select>
+              <input type="range" class="speed-range" min="0.5" max="2" step="0.1" value="1.2">
+              <span class="speed-value">1.2x</span>
+            </div>
+          `;
+          
+          const copyButton = retryElement.querySelector('.copy-button');
+          copyButton.addEventListener('click', () => {
+            const content = `${title}\n${date}\n\n${paragraphs.join('\n\n')}`;
+            navigator.clipboard.writeText(content).then(() => {
+              alert('記事をクリップボードにコピーしました');
+            }).catch(err => {
+              console.error('コピーに失敗しました:', err);
+            });
+          });
+
+          const readButton = retryElement.querySelector('.read-button');
+          const voiceSelect = retryElement.querySelector('.voice-select');
+          const speedRange = retryElement.querySelector('.speed-range');
+          const speedValue = retryElement.querySelector('.speed-value');
+
+          readButton.addEventListener('click', () => {
+            if (synth.speaking) {
+              synth.cancel();
+              readButton.textContent = 'この記事を読み上げ';
+            } else {
+              const content = `${title}。${date ? date + '。' : ''}${paragraphs.join('。')}`;
+              const utterance = new SpeechSynthesisUtterance(content);
+              utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === voiceSelect.value);
+              utterance.rate = parseFloat(speedRange.value);
+              utterance.onend = () => {
+                readButton.textContent = 'この記事を読み上げ';
+              };
+              synth.speak(utterance);
+              currentUtterance = utterance;
+              readButton.textContent = '停止';
+            }
+          });
+
+          speedRange.addEventListener('input', () => {
+            speedValue.textContent = `${speedRange.value}x`;
+            if (currentUtterance) {
+              currentUtterance.rate = parseFloat(speedRange.value);
+            }
+          });
+        } catch (retryError) {
+          console.error(`Failed to extract content after retries for ${articleUrl}:`, retryError);
+          retryElement.innerHTML = `<p>${articleUrl} からのコンテンツ抽出に失敗しました。</p>`;
+        }
+
+        completedArticles++;
+        updateProgress(completedArticles, totalArticles);
+      }
+    }
+
+    if (resultElement.children.length === 0) {
+      resultElement.textContent = '抽出できるコンテンツが見つかりませんでした';
+    }
+  } catch (error) {
+    console.error('There was a problem with the fetch operation:', error);
+    errorElement.textContent = 'エラーが発生しました: ' + error.message;
+  } finally {
+    loadingElement.style.display = 'none';
+  }
+}
+
+function updateProgress(completed, total) {
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const percentage = (completed / total) * 100;
+  progressFill.style.width = `${percentage}%`;
+  progressText.textContent = `${completed} / ${total} 記事を抽出中`;
+}
+
+document.getElementById('extractButton').addEventListener('click', function() {
+  const url = document.getElementById('urlInput').value;
+  if (!url) {
+    document.getElementById('error').textContent = 'URLを入力してください';
+    return;
+  }
+  extractArticles(url, '/news/');
+});
+
+document.getElementById('sbsLatestButton').addEventListener('click', function() {
+  extractArticles('https://newsdig.tbs.co.jp/list/sbs/latest', '/articles/sbs/');
+});
+
+document.getElementById('latestButton').addEventListener('click', function() {
+  extractArticles('https://newsdig.tbs.co.jp/list/latest', '/articles/-/');
+});
+
+document.getElementById('nhkLatestButton').addEventListener('click', function() {
+  extractArticles('https://www3.nhk.or.jp/news/catnew.html', 'nhk');
+});
+
+document.getElementById('copyAllButton').addEventListener('click', function() {
+  const allContent = allArticles.map(article => `${article.title}\n${article.date || ''}\n\n${article.paragraphs.join('\n\n')}`).join('\n\n---\n\n');
+  navigator.clipboard.writeText(allContent).then(() => {
+    alert('全記事をクリップボードにコピーしました');
+  }).catch(err => {
+    console.error('コピーに失敗しました:', err);
+  });
+});
+
+document.getElementById('readAllButton').addEventListener('click', function() {
+  if (synth.speaking) {
+    synth.cancel();
+    this.textContent = '全記事を読み上げ';
+  } else {
+    const allContent = allArticles.map(article => `${article.title}。${article.date ? article.date + '。' : ''}${article.paragraphs.join('。')}`).join('。次の記事。');
+    const utterance = new SpeechSynthesisUtterance(allContent);
+    utterance.voice = speechSynthesis.getVoices().find(voice => voice.name === document.getElementById('globalVoiceSelect').value);
+    utterance.rate = parseFloat(document.getElementById('globalSpeedRange').value);
+    utterance.onend = () => {
+      this.textContent = '全記事を読み上げ';
+    };
+    synth.speak(utterance);
+    currentUtterance = utterance;
+    this.textContent = '停止';
+  }
+});
+
+document.getElementById('globalSpeedRange').addEventListener('input', function() {
+  document.getElementById('globalSpeedValue').textContent = `${this.value}x`;
+  if (currentUtterance) {
+    currentUtterance.rate = parseFloat(this.value);
+  }
+});
+
+function addTouchFeedback() {
+  const buttons = document.querySelectorAll('.button, .copy-button, .read-button');
+  
+  buttons.forEach(button => {
+    button.addEventListener('touchstart', function() {
+      this.style.opacity = '0.7';
+    });
+
+    button.addEventListener('touchend', function() {
+      this.style.opacity = '1';
+    });
+  });
+}
+
+function populateVoiceList() {
+  const voices = speechSynthesis.getVoices();
+  const japaneseVoices = voices.filter(voice => voice.lang.startsWith('ja'));
+
+  let voiceOptionsHTML = japaneseVoices.map(voice => 
+    `<option value="${voice.name}">${voice.name}</option>`
+  ).join('');
+
+  // Siriの音声をデフォルトに設定
+  const siriVoice = japaneseVoices.find(voice => voice.name.includes('Siri'));
+  if (siriVoice) {
+    voiceOptionsHTML = `<option value="${siriVoice.name}" selected>${siriVoice.name}</option>` + voiceOptionsHTML;
+  }
+
+  document.getElementById('globalVoiceSelect').innerHTML = voiceOptionsHTML;
+  document.querySelectorAll('.voice-select').forEach(select => {
+    select.innerHTML = voiceOptionsHTML;
+  });
+}
+
+document.getElementById('scrollTopButton').addEventListener('click', function() {
+  const resultElement = document.getElementById('result');
+  resultElement.scrollTo({top: 0, behavior: 'smooth'});
+});
+
+document.getElementById('scrollBottomButton').addEventListener('click', function() {
+  const resultElement = document.getElementById('result');
+  resultElement.scrollTo({top: resultElement.scrollHeight, behavior: 'smooth'});
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  addTouchFeedback();
+  
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = populateVoiceList;
+  }
+
+  populateVoiceList();
+
+  // デフォルトの再生速度を1.2に設定
+  document.getElementById('globalSpeedRange').value = 1.2;
+  document.getElementById('globalSpeedValue').textContent = '1.2x';
+  document.querySelectorAll('.speed-range').forEach(range => {
+    range.value = 1.2;
+    range.nextElementSibling.textContent = '1.2x';
+  });
+});
+</script>
+</body></html>
